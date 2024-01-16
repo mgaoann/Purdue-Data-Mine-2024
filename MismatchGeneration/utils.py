@@ -5,15 +5,124 @@ Utils
 This notebooks contains utility functions for accessing Wikidata's data and checking Mismatch Finder submissions.
 
 Contents:
+    download_wikidata_dump,
     validate_url,
     mf_file_creation_directions,
     check_mf_formatting
 """
 
+import bz2
+import json
+import logging
+import os
+import requests
 from urllib.parse import urlparse
+import warnings
 
+from bs4 import BeautifulSoup
 import numpy as np
 import pandas as pd
+
+logging.disable(logging.WARNING)
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+import tensorflow as tf
+
+
+def download_wikidata_dump(target_dir="Data", dump_id=False):
+    """
+    Downloads the most recent stable dump of Wikidata if it is not already in the specified directory.
+
+    Parameters
+    ----------
+        target_dir : str (default=wiki_dump)
+            The directory in the pwd into which files should be downloaded.
+
+        dump_id : str (default=False)
+            The id of an explicit Wikidata dump that the user wants to download.
+
+    Returns
+    -------
+        A downloaded bz2 compressed Wikidata dump with printed information on the downloaded file.
+    """
+    if not os.path.exists(target_dir):
+        print(f"Making {target_dir} directory")
+        os.makedirs(target_dir)
+
+    # Find all files to download.
+    base_url = "https://dumps.wikimedia.org/other/wikibase/wikidatawiki"
+    dumps_index = requests.get(base_url).text
+    dumps_soup_index = BeautifulSoup(dumps_index, "html.parser")
+
+    all_dumps = [
+        a["href"].split("/")[0]
+        for a in dumps_soup_index.find_all("a")
+        if a.has_attr("href")
+    ]
+
+    # Derive URL for the dump to download.
+    if not dump_id:
+        target_dump_id = "latest-all.json.bz2"
+        target_local_file_path = f"{target_dir}/{target_dump_id}"
+        target_dump_url = f"{base_url}/{target_dump_id}"
+
+    else:
+        if dump_id in all_dumps:
+            target_dump_dir_url = f"{base_url}/{dump_id}"
+            target_dump_dir_index = requests.get(target_dump_dir_url).text
+
+            target_dump_dir_soup_index = BeautifulSoup(
+                target_dump_dir_index, "html.parser"
+            )
+            all_dump_files = [
+                a["href"].split("/")[0]
+                for a in target_dump_dir_soup_index.find_all("a")
+                if a.has_attr("href")
+            ]
+
+            target_dump_id = f"wikidata-{dump_id}-all.json.bz2"
+            if target_dump_id in all_dump_files:
+                target_local_file_path = f"{target_dir}/{target_dump_id}"
+                target_dump_url = f"{target_dump_dir_url}/{target_dump_id}"
+
+        else:
+            raise ValueError(
+                "The passed value for `dump_id` is not a valid Wikidata dump."
+            )
+
+    # Check if the dump has already been downloaded.
+    if os.path.exists(target_local_file_path):
+        print(
+            f"The desired Wikidata dump already exists locally at {target_local_file_path}. Skipping download."
+        )
+
+    else:
+        print(
+            f"The desired Wikidata dump does not exist locally. Starting download to {target_local_file_path}..."
+        )
+
+        cache_subdir = target_dir.split("/")[-1]
+        cache_dir = "/".join(target_dir.split("/")[:-1])
+        if cache_dir == "":
+            cache_subdir = target_dir
+            cache_dir = "."
+
+        # Use Tensorflow for the download so we download iteratively and have a progress bar.
+        saved_file_path = tf.keras.utils.get_file(
+            fname=target_dump_id,
+            origin=target_dump_url,
+            extract=True,
+            archive_format="auto",
+            cache_subdir=cache_subdir,
+            cache_dir=cache_dir,
+        )
+
+    file_size = os.stat(target_local_file_path).st_size / 1e6
+    with bz2.open(target_local_file_path, "rt") as f:
+        data = json.load(f)
+
+    print(
+        f"Downloaded a compressed dump of {len(data):,} Wikidata QIDs ({file_size:,} GBs)."
+    )
 
 
 def validate_url(url):
@@ -151,9 +260,7 @@ def check_mf_formatting(df: pd.DataFrame):
                 for i in range(len(url_validation_checks))
                 if url_validation_checks[i] == False
             ]
-            url_correction_message = (
-                "Please check the following URLs in `external_url` to make sure that they're valid:"
-            )
+            url_correction_message = "Please check the following URLs in `external_url` to make sure that they're valid:"
             for u in invalid_urls:
                 url_correction_message += f"\n    - {u}"
 
@@ -196,4 +303,6 @@ def check_mf_formatting(df: pd.DataFrame):
         raise ValueError(value_error_message)
 
     else:
-        print("All checks have passed! The data is ready to be uploaded to Mismatch Finder.")
+        print(
+            "All checks have passed! The data is ready to be uploaded to Mismatch Finder."
+        )
