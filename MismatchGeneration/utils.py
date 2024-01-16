@@ -5,7 +5,7 @@ Utils
 This notebooks contains utility functions for accessing Wikidata's data and checking Mismatch Finder submissions.
 
 Contents:
-    download_wikidata_dump,
+    download_wikidata_json_dump,
     validate_url,
     mf_file_creation_directions,
     check_mf_formatting
@@ -28,7 +28,7 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 import tensorflow as tf
 
 
-def download_wikidata_dump(target_dir="Data", dump_id=False):
+def download_wikidata_json_dump(target_dir="Data", dump_id=False):
     """
     Downloads the most recent stable dump of Wikidata if it is not already in the specified directory.
 
@@ -84,6 +84,11 @@ def download_wikidata_dump(target_dir="Data", dump_id=False):
                 target_local_file_path = f"{target_dir}/{target_dump_id}"
                 target_dump_url = f"{target_dump_dir_url}/{target_dump_id}"
 
+            else:
+                raise ValueError(
+                    "The passed value for `dump_id` does not have a bz2 compressed dump for all of Wikidata."
+                )
+
         else:
             raise ValueError(
                 "The passed value for `dump_id` is not a valid Wikidata dump."
@@ -93,6 +98,14 @@ def download_wikidata_dump(target_dir="Data", dump_id=False):
     if os.path.exists(target_local_file_path):
         print(
             f"The desired Wikidata dump already exists locally at {target_local_file_path}. Skipping download."
+        )
+
+        file_size = os.stat(target_local_file_path).st_size / 1e6
+        with bz2.open(target_local_file_path, "rt") as f:
+            data = json.load(f)
+
+        print(
+            f"The dump has {len(data):,} Wikidata QIDs ({file_size:,} GBs)."
         )
 
     else:
@@ -116,13 +129,13 @@ def download_wikidata_dump(target_dir="Data", dump_id=False):
             cache_dir=cache_dir,
         )
 
-    file_size = os.stat(target_local_file_path).st_size / 1e6
-    with bz2.open(target_local_file_path, "rt") as f:
-        data = json.load(f)
+        file_size = os.stat(target_local_file_path).st_size / 1e6
+        with bz2.open(target_local_file_path, "rt") as f:
+            data = json.load(f)
 
-    print(
-        f"Downloaded a compressed dump of {len(data):,} Wikidata QIDs ({file_size:,} GBs)."
-    )
+        print(
+            f"Downloaded a compressed dump of {len(data):,} Wikidata QIDs ({file_size:,} GBs)."
+        )
 
 
 def validate_url(url):
