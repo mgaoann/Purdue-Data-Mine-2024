@@ -1,23 +1,19 @@
-# Utils
-# -----
-#
-# This notebooks contains utility functions for accessing Wikidata's data and checking Mismatch Finder submissions.
-#
+"""
+Utils
+-----
+
+This notebooks contains utility functions for accessing Wikidata's data and checking Mismatch Finder submissions.
+
+Contents:
+    validate_url,
+    mf_file_creation_directions,
+    check_mf_formatting
+"""
 
 from urllib.parse import urlparse
 
 import numpy as np
 import pandas as pd
-
-
-def mf_file_creation_directions():
-    return """
-There's a problem with the DataFrame. Please see the Mismatch Finder file creation directions on GitHub:
-
-https://github.com/wmde/wikidata-mismatch-finder/blob/main/docs/UserGuide.md#creating-a-mismatches-import-file
-
-Directions on how to fix the DataFrame are also detailed below:
-"""
 
 
 def validate_url(url):
@@ -33,6 +29,19 @@ def validate_url(url):
 
     else:
         return True
+
+
+def mf_file_creation_directions():
+    """
+    Retuns the first part of the message to users that tells them that their mismatch file isn't formatted properly.
+    """
+    return """
+There's a problem with the DataFrame. Please see the Mismatch Finder file creation directions on GitHub:
+
+https://github.com/wmde/wikidata-mismatch-finder/blob/main/docs/UserGuide.md#creating-a-mismatches-import-file
+
+Directions on how to fix the DataFrame are also detailed below:
+"""
 
 
 def check_mf_formatting(df: pd.DataFrame):
