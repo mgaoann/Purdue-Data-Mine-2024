@@ -6,13 +6,13 @@ This notebooks contains utility functions for accessing Wikidata's data and chec
 
 Contents:
     download_wikidata_json_dump,
+    parse_dump_for_entries,
     validate_url,
     mf_file_creation_directions,
     check_mf_formatting
 """
 
 import bz2
-import json
 import logging
 import os
 import requests
@@ -94,23 +94,18 @@ def download_wikidata_json_dump(target_dir="Data", dump_id=False):
                 "The passed value for `dump_id` is not a valid Wikidata dump."
             )
 
+    print(f"Target Wikidata dump file is '{target_dump_id}'.")
+
     # Check if the dump has already been downloaded.
     if os.path.exists(target_local_file_path):
+        file_size = os.stat(target_local_file_path).st_size / 1e9
         print(
-            f"The desired Wikidata dump already exists locally at {target_local_file_path}. Skipping download."
-        )
-
-        file_size = os.stat(target_local_file_path).st_size / 1e6
-        with bz2.open(target_local_file_path, "rt") as f:
-            data = json.load(f)
-
-        print(
-            f"The dump has {len(data):,} Wikidata QIDs ({file_size:,} GBs)."
+            f"The desired dump already exists locally at {target_local_file_path} ({round(file_size, 2):,} GBs). Skipping download."
         )
 
     else:
         print(
-            f"The desired Wikidata dump does not exist locally. Starting download to {target_local_file_path}..."
+            f"The desired dump does not exist locally. Starting download to {target_local_file_path}..."
         )
 
         cache_subdir = target_dir.split("/")[-1]
@@ -129,13 +124,17 @@ def download_wikidata_json_dump(target_dir="Data", dump_id=False):
             cache_dir=cache_dir,
         )
 
-        file_size = os.stat(target_local_file_path).st_size / 1e6
-        with bz2.open(target_local_file_path, "rt") as f:
-            data = json.load(f)
-
+        file_size = os.stat(target_local_file_path).st_size / 1e9
         print(
-            f"Downloaded a compressed dump of {len(data):,} Wikidata QIDs ({file_size:,} GBs)."
+            f"Downloaded a compressed dump of Wikidata QIDs ({round(file_size, 2):,} GBs)."
         )
+
+
+def parse_dump_for_entries():
+    """
+    Parse a bz2 Wikidata dump for specific entries based on properties.
+    """
+    return
 
 
 def validate_url(url):

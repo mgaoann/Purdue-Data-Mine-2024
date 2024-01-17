@@ -16,3 +16,7 @@ __pycache__
 .venv
 env
 venv
+
+# Data
+######
+*all.json.bz2
