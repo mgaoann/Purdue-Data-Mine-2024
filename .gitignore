@@ -19,5 +19,5 @@ venv
 
 # Data
 ######
-*test-dump.ndjson
+*test-parse.ndjson
 *all.json.bz2
