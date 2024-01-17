@@ -6,13 +6,15 @@ This notebooks contains utility functions for accessing Wikidata's data and chec
 
 Contents:
     download_wikidata_json_dump,
-    parse_dump_for_entries,
+    _process_json_entry,
+    parse_dump_to_ndjson,
     validate_url,
     mf_file_creation_directions,
     check_mf_formatting
 """
 
 import bz2
+import json
 import logging
 import os
 import requests
@@ -22,6 +24,7 @@ import warnings
 from bs4 import BeautifulSoup
 import numpy as np
 import pandas as pd
+from tqdm.auto import tqdm
 
 logging.disable(logging.WARNING)
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
@@ -34,7 +37,7 @@ def download_wikidata_json_dump(target_dir="Data", dump_id=False):
 
     Parameters
     ----------
-        target_dir : str (default=wiki_dump)
+        target_dir : str (default=Data)
             The directory in the pwd into which files should be downloaded.
 
         dump_id : str (default=False)
@@ -44,7 +47,7 @@ def download_wikidata_json_dump(target_dir="Data", dump_id=False):
     -------
         A downloaded bz2 compressed Wikidata dump with printed information on the downloaded file.
     """
-    if not os.path.exists(target_dir):
+    if os.path.exists(target_dir) == False:
         print(f"Making {target_dir} directory")
         os.makedirs(target_dir)
 
@@ -94,7 +97,7 @@ def download_wikidata_json_dump(target_dir="Data", dump_id=False):
                 "The passed value for `dump_id` is not a valid Wikidata dump."
             )
 
-    print(f"Target Wikidata dump file is '{target_dump_id}'.")
+    print(f"Target Wikidata dump file is '{target_dump_id}'.\n")
 
     # Check if the dump has already been downloaded.
     if os.path.exists(target_local_file_path):
@@ -130,18 +133,185 @@ def download_wikidata_json_dump(target_dir="Data", dump_id=False):
         )
 
 
-def parse_dump_for_entries():
+def _process_json_entry(entry: str, pids: list = None, pid_values: list = None):
+    """
+    Process a Wikidata item in a bz2 compressed JSON file.
+
+    Parameters
+    ----------
+        entry : str
+            The dump entry to conditionally check whether it should be included.
+
+        pids : list(str) (default=None)
+            The property ids that should be subset by.
+
+        pid_values : list(str) (default=None)
+            The values of the properties to subset by.
+
+    Returns
+    -------
+        A boolean on whether the entry meets the criteria of the properties and values.
+    """
+    # If no PIDs are passed then all entries are included in the output.
+    if pids is None:
+        return True
+
+    else:
+        try:
+            # For PIDs check that all are present.
+            prop_claims = {}
+            for p in pids:
+                prop_claims[p] = entry["claims"][p]
+
+            if pid_values is None:
+                return True
+
+            else:
+                # For PID values check that each is equivalent to what Wikidata has.
+                for i in range(len(pid_values)):
+                    all_prop_values = [
+                        prop_claims[pids[i]][idx]["mainsnak"]["datavalue"]["value"]["id"]
+                        for idx in range(len(prop_claims[pids[i]]))
+                    ]
+                    assert pid_values[i] in all_prop_values
+
+                    return True
+
+        except:
+            return False
+
+
+def parse_dump_to_ndjson(
+    pids: str | list,
+    pid_values: str | list,
+    output_file_path: str = "Data/parsed-dump.ndjson",
+    input_file_path: str = "Data/latest-all.json.bz2",
+    output_limit: int = None,
+    input_limit: int = None,
+    verbose: bool = True,
+):
     """
     Parse a bz2 Wikidata dump for specific entries based on properties.
+
+    Parameters
+    ----------
+        pids : str or list(str)
+            The property ids that should be subset by.
+
+        pid_values : str or list(str)
+            The values of the properties to subset by.
+
+        output_file_path : str (default=Data/parsed-dump.ndjson)
+            The name of the final output ndjson file.
+
+        input_file_path : str (default=Data/latest-all.json.bz2)
+            The path to the directory where the data is stored.
+
+        output_limit : int (default=None)
+            An optional limit of the number of entities to find.
+
+        input_limit : int (default=None)
+            An optional limit of the number of entities to search through.
+
+        verbose : bool (default=True)
+            Whether to show a tqdm progress bar for the process.
     """
-    return
+    if pids is None:
+        print(
+            "You have not provided a value to the `pids` argument. All entries will be returned.\n"
+        )
+
+    if pid_values:
+        assert len(pids) == len(
+            pid_values
+        ), "If providing a value for `pid_values`, then one value should be provided for each `pid`."
+
+    if type(pids) == str:
+        pids = [pids]
+
+    if type(pid_values) == str:
+        pid_values = [pid_values]
+
+    if not os.path.exists(output_file_path):
+        print(f"Making {output_file_path} file for the output.")
+        open(output_file_path, "a").close()
+        rewrite_file = False
+
+    else:
+        print(f"The output file {output_file_path} already exists.")
+        print("This file will be rewritten.")
+        rewrite_file = True
+
+    if input_limit is not None:
+        pbar_limit = input_limit
+        pbar_desc = "Entries processed"
+
+    elif output_limit is not None:
+        pbar_limit = output_limit
+        pbar_desc = "Outputs returned"
+
+    else:
+        pbar_limit = None
+        pbar_desc = "Entries processed"
+
+    lines_read = 0
+    entities_returned = 0
+    with bz2.BZ2File(input_file_path, "r") as f_in:
+        if rewrite_file:
+            with open(output_file_path, "r") as f_out:
+                _ = f_out.read()
+
+        with open(output_file_path, "w") as f_out:
+            pbar = tqdm(
+                total=pbar_limit,
+                desc=pbar_desc,
+                unit="entries",
+                disable=not verbose,
+            )
+            for line in f_in:
+                # Skip the first value as it's a new line character.
+                if lines_read == 0:
+                    lines_read += 1
+                    pbar.update()
+                    pass
+
+                else:
+                    try:
+                        # Read in only to the last two characters that are a comma and new line.
+                        json_entry = json.loads(line.decode("utf-8")[:-2])
+                        if _process_json_entry(
+                            entry=json_entry, pids=pids, pid_values=pid_values
+                        ):
+                            f_out.write(json.dumps(json_entry) + "\n")
+
+                            entities_returned += 1
+                            if output_limit:
+                                pbar.update()
+
+                            if entities_returned == output_limit:
+                                lines_read += 1
+                                break
+
+                    except json.JSONDecodeError as e:
+                        print(f"{lines_read}. Error decoding JSON: {e}")
+
+                    lines_read += 1
+                    if input_limit:
+                        pbar.update()
+
+                    if lines_read == input_limit:
+                        break
+
+    print(
+        f"Parsed {lines_read:,} entries in the JSON dump into an NDJSON file with {entities_returned:,} entities."
+    )
 
 
 def validate_url(url):
     """
     Check that a value is not null and is a valid URL if so.
     """
-    if not pd.isnull(url):
+    if pd.isnull(url) is None:
         try:
             url_parse = urlparse(url)
             return all([url_parse.scheme, url_parse.netloc])
@@ -154,7 +324,7 @@ def validate_url(url):
 
 def mf_file_creation_directions():
     """
-    Retuns the first part of the message to users that tells them that their mismatch file isn't formatted properly.
+    Returns the first part of the message to users that tells them that their mismatch file isn't formatted properly.
     """
     return """
 There's a problem with the DataFrame. Please see the Mismatch Finder file creation directions on GitHub:
@@ -209,11 +379,11 @@ def check_mf_formatting(df: pd.DataFrame):
     columns_with_invalid_ids = []
     for c in id_columns_included:
         if c == "item_id":
-            if not df[c].astype(str).str.match(r"^Q\d+$").all() == True:
+            if df[c].astype(str).str.match(r"^Q\d+$").all() != True:
                 columns_with_invalid_ids.append(c)
 
         elif c == "property_id":
-            if not df[c].astype(str).str.match(r"^P\d+$").all() == True:
+            if df[c].astype(str).str.match(r"^P\d+$").all() != True:
                 columns_with_invalid_ids.append(c)
 
     if columns_with_invalid_ids:
@@ -307,7 +477,7 @@ def check_mf_formatting(df: pd.DataFrame):
         correction_instruction.append(too_long_value_correction_message)
 
     # Raise exception if there's a data formatting issue or print that all checks have passed.
-    if not df_formatted_correctly:
+    if df_formatted_correctly == False:
         value_error_message = mf_file_creation_directions() + "".join(
             f"\n{i+1}. {correction_instruction[i]}\n"
             for i in range(len(correction_instruction))
