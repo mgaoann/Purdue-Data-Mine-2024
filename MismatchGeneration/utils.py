@@ -9,7 +9,7 @@ Contents:
     _get_entity_value,
     _process_json_entry,
     parse_dump_to_ndjson,
-    validate_url,
+    _validate_url,
     check_mf_formatting
 """
 
@@ -336,7 +336,7 @@ def parse_dump_to_ndjson(
     )
 
 
-def validate_url(url):
+def _validate_url(url):
     """
     Check that a value is not null and is a valid URL if so.
     """
@@ -450,7 +450,7 @@ def check_mf_formatting(df: pd.DataFrame):
 
     # 5. Check that all external URLs are valid.
     if "external_url" in df.columns:
-        url_validation_checks = [validate_url(u) for u in df["external_url"]]
+        url_validation_checks = [_validate_url(u) for u in df["external_url"]]
         if False in url_validation_checks:
             df_formatted_correctly = False
             invalid_urls = [
