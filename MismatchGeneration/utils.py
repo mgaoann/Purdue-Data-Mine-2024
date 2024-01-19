@@ -6,6 +6,7 @@ This notebooks contains utility functions for accessing Wikidata's data and chec
 
 Contents:
     download_wikidata_json_dump,
+    _get_entity_value,
     _process_json_entry,
     parse_dump_to_ndjson,
     validate_url,
@@ -47,7 +48,7 @@ def download_wikidata_json_dump(target_dir="Data", dump_id=False):
     -------
         A downloaded bz2 compressed Wikidata dump with printed information on the downloaded file.
     """
-    if os.path.exists(target_dir) == False:
+    if not os.path.exists(target_dir):
         print(f"Making {target_dir} directory")
         os.makedirs(target_dir)
 
@@ -72,10 +73,10 @@ def download_wikidata_json_dump(target_dir="Data", dump_id=False):
         if dump_id in all_dumps:
             target_dump_dir_url = f"{base_url}/{dump_id}"
             target_dump_dir_index = requests.get(target_dump_dir_url).text
-
             target_dump_dir_soup_index = BeautifulSoup(
                 target_dump_dir_index, "html.parser"
             )
+
             all_dump_files = [
                 a["href"].split("/")[0]
                 for a in target_dump_dir_soup_index.find_all("a")
@@ -133,9 +134,40 @@ def download_wikidata_json_dump(target_dir="Data", dump_id=False):
         )
 
 
+def _get_claims_embedded_value(claims_index: dict, data_type: str):
+    """
+    Returns the embedded value of a given entity given its data type.
+
+    Parameters
+    ----------
+        claims_index : dict
+            An element of the claims for a Wikidata item's properties.
+
+        data_type: str
+            The type of data that the Wikidata item is.
+
+    Returns
+    -------
+        The string value that's either the value itself or one of the value's keys.
+    """
+    # Please note that this doesn't account for all data types including coordinates and others.
+    data_value = claims_index["mainsnak"]["datavalue"]["value"]
+    if data_type == "wikibase-entityid":
+        return data_value["id"]
+
+    elif data_type == "quantity":
+        return data_value["amount"]
+
+    elif data_type == "monolingualtext":
+        return data_value["text"]
+
+    else:
+        return data_value
+
+
 def _process_json_entry(entry: str, pids: list = None, pid_values: list = None):
     """
-    Process a Wikidata item in a bz2 compressed JSON file.
+    Checks properties and property values in a Wikidata item during compressed dump parsing.
 
     Parameters
     ----------
@@ -144,6 +176,8 @@ def _process_json_entry(entry: str, pids: list = None, pid_values: list = None):
 
         pids : list(str) (default=None)
             The property ids that should be subset by.
+
+            Data types can be wikibase-entityid, quantity, monolingualtext or types without embedded values.
 
         pid_values : list(str) (default=None)
             The values of the properties to subset by.
@@ -156,29 +190,28 @@ def _process_json_entry(entry: str, pids: list = None, pid_values: list = None):
     if pids is None:
         return True
 
-    else:
-        try:
-            # For PIDs check that all are present.
-            prop_claims = {}
-            for p in pids:
-                prop_claims[p] = entry["claims"][p]
+    try:
+        # Check that all PIDS are present.
+        prop_claims = {p: entry["claims"][p] for p in pids}
 
-            if pid_values is None:
-                return True
+        if pid_values is None:
+            return True
 
-            else:
-                # For PID values check that each is equivalent to what Wikidata has.
-                for i in range(len(pid_values)):
-                    all_prop_values = [
-                        prop_claims[pids[i]][idx]["mainsnak"]["datavalue"]["value"]["id"]
-                        for idx in range(len(prop_claims[pids[i]]))
-                    ]
-                    assert pid_values[i] in all_prop_values
+        # For PID values check that each is included in what Wikidata has.
+        for i, pid in enumerate(pids):
+            data_type = prop_claims[pid][0]["mainsnak"]["datavalue"]["type"]
+            all_prop_values = [
+                _get_claims_embedded_value(
+                    claims_index=prop_claims[pid][idx], data_type=data_type
+                )
+                for idx in range(len(prop_claims[pid]))
+            ]
+            assert pid_values[i] in all_prop_values
 
-                    return True
+            return True
 
-        except:
-            return False
+    except:
+        return False
 
 
 def parse_dump_to_ndjson(
@@ -226,16 +259,13 @@ def parse_dump_to_ndjson(
             pid_values
         ), "If providing a value for `pid_values`, then one value should be provided for each `pid`."
 
-    if type(pids) == str:
-        pids = [pids]
+    pids = [pids] if isinstance(pids, str) else pids
+    pid_values = [pid_values] if isinstance(pid_values, str) else pid_values
 
-    if type(pid_values) == str:
-        pid_values = [pid_values]
-
+    rewrite_file = False
     if not os.path.exists(output_file_path):
         print(f"Making {output_file_path} file for the output.")
         open(output_file_path, "a").close()
-        rewrite_file = False
 
     else:
         print(f"The output file {output_file_path} already exists.")
@@ -277,7 +307,7 @@ def parse_dump_to_ndjson(
 
                 else:
                     try:
-                        # Read in only to the last two characters that are a comma and new line.
+                        # Read in to the last two characters that are a comma and new line.
                         json_entry = json.loads(line.decode("utf-8")[:-2])
                         if _process_json_entry(
                             entry=json_entry, pids=pids, pid_values=pid_values
@@ -293,7 +323,7 @@ def parse_dump_to_ndjson(
                                 break
 
                     except json.JSONDecodeError as e:
-                        print(f"{lines_read}. Error decoding JSON: {e}")
+                        print(f"Error decoding JSON at entry {lines_read + 1}: {e}")
 
                     lines_read += 1
                     if input_limit:
@@ -315,11 +345,11 @@ def validate_url(url):
         try:
             url_parse = urlparse(url)
             return all([url_parse.scheme, url_parse.netloc])
+
         except:
             return False
 
-    else:
-        return True
+    return True
 
 
 def mf_file_creation_directions():
