@@ -2,7 +2,7 @@
 Utils
 -----
 
-This notebooks contains utility functions for accessing Wikidata's data and checking Mismatch Finder submissions.
+This file contains utility functions for accessing Wikidata's data and checking Mismatch Finder submissions.
 
 Contents:
     download_wikidata_json_dump,
