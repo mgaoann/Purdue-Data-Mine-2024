@@ -8,7 +8,7 @@ Contents:
     download_wikidata_json_dump,
     _get_entity_value,
     _process_json_entry,
-    parse_dump_to_ndjson,
+    parse_wikidata_dump_to_ndjson,
     _validate_url,
     check_mf_formatting
 """
@@ -213,7 +213,7 @@ def _process_json_entry(entry: str, pids: list = None, pid_values: list = None):
         return False
 
 
-def parse_dump_to_ndjson(
+def parse_wikidata_dump_to_ndjson(
     pids: str | list,
     pid_values: str | list,
     output_file_path: str = "Data/parsed-dump.ndjson",
