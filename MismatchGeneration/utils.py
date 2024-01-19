@@ -10,7 +10,6 @@ Contents:
     _process_json_entry,
     parse_dump_to_ndjson,
     validate_url,
-    mf_file_creation_directions,
     check_mf_formatting
 """
 
@@ -352,19 +351,6 @@ def validate_url(url):
     return True
 
 
-def mf_file_creation_directions():
-    """
-    Returns the first part of the message to users that tells them that their mismatch file isn't formatted properly.
-    """
-    return """
-There's a problem with the DataFrame. Please see the Mismatch Finder file creation directions on GitHub:
-
-https://github.com/wmde/wikidata-mismatch-finder/blob/main/docs/UserGuide.md#creating-a-mismatches-import-file
-
-Directions on how to fix the DataFrame are also detailed below:
-"""
-
-
 def check_mf_formatting(df: pd.DataFrame):
     """
     Checks a Pandas DataFrame to see whether it will produce a valid CSV for Mismatch Finder.
@@ -508,7 +494,14 @@ def check_mf_formatting(df: pd.DataFrame):
 
     # Raise exception if there's a data formatting issue or print that all checks have passed.
     if df_formatted_correctly == False:
-        value_error_message = mf_file_creation_directions() + "".join(
+        mf_file_creation_directions = """
+There's a problem with the DataFrame. Please see the Mismatch Finder file creation directions on GitHub:
+
+https://github.com/wmde/wikidata-mismatch-finder/blob/main/docs/UserGuide.md#creating-a-mismatches-import-file
+
+Directions on how to fix the DataFrame are also detailed below:
+"""
+        value_error_message = mf_file_creation_directions + "".join(
             f"\n{i+1}. {correction_instruction[i]}\n"
             for i in range(len(correction_instruction))
         )
