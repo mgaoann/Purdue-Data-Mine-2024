@@ -133,7 +133,9 @@ def download_wikidata_json_dump(target_dir="Data", dump_id=False):
         )
 
 
-def _get_claims_embedded_value(claims_index: dict, data_type: str):
+def _get_claims_embedded_value(
+    claims_index: dict, data_type: str, value_prop: str = None
+):
     """
     Returns the embedded value of a given entity given its data type.
 
@@ -145,6 +147,9 @@ def _get_claims_embedded_value(claims_index: dict, data_type: str):
         data_type: str
             The type of data that the Wikidata item is.
 
+        value_prop : str (default=None)
+            Property of the value like a unit or language if needed.
+
     Returns
     -------
         The string value that's either the value itself or one of the value's keys.
@@ -155,16 +160,38 @@ def _get_claims_embedded_value(claims_index: dict, data_type: str):
         return data_value["id"]
 
     elif data_type == "quantity":
-        return data_value["amount"]
+        if value_prop == None:
+            return data_value["amount"]
+
+        else:
+            if value_prop == data_value["unit"]:
+                return data_value["amount"]
+
+            else:
+                return data_value
 
     elif data_type == "monolingualtext":
-        return data_value["text"]
+        if value_prop == None:
+            return data_value["text"]
+
+        else:
+            if value_prop == data_value["language"]:
+                return data_value["text"]
+
+            else:
+                return data_value
 
     else:
         return data_value
 
 
-def _process_json_entry(entry: str, pids: list = None, pid_values: list = None):
+def _process_json_entry(
+    entry: str,
+    pids: list = None,
+    pid_values: list = None,
+    pid_value_props: list = None,
+    prop_intersection: bool = True,
+):
     """
     Checks properties and property values in a Wikidata item during compressed dump parsing.
 
@@ -181,6 +208,12 @@ def _process_json_entry(entry: str, pids: list = None, pid_values: list = None):
         pid_values : list(str) (default=None)
             The values of the properties to subset by.
 
+        pid_value_props : str or list(str)
+            Properties of the values like a unit or language if needed.
+
+        prop_intersection : bool (default=True)
+            Whether all pids and pid_values need to be present for the element to be included.
+
     Returns
     -------
         A boolean on whether the entry meets the criteria of the properties and values.
@@ -191,31 +224,66 @@ def _process_json_entry(entry: str, pids: list = None, pid_values: list = None):
 
     try:
         # Check that all PIDS are present.
-        prop_claims = {p: entry["claims"][p] for p in pids}
+        if prop_intersection:
+            prop_claims = {p: entry["claims"][p] for p in pids}
+
+        else:
+            prop_claims = {}
+            for p in pids:
+                if p in entry["claims"].keys():
+                    prop_claims[p] = entry["claims"][p]
+
+            if len(prop_claims) == 0:
+                return False
 
         if pid_values is None:
             return True
 
         # For PID values check that each is included in what Wikidata has.
         for i, pid in enumerate(pids):
-            data_type = prop_claims[pid][0]["mainsnak"]["datavalue"]["type"]
-            all_prop_values = [
-                _get_claims_embedded_value(
-                    claims_index=prop_claims[pid][idx], data_type=data_type
-                )
-                for idx in range(len(prop_claims[pid]))
-            ]
-            assert pid_values[i] in all_prop_values
+            # Derive the data type for the given property value.
+            # There always is only one data type, but not all claim elements have it.
+            data_type = None
+            for claim in prop_claims[pid]:
+                try:
+                    data_type = claim["mainsnak"]["datavalue"]["type"]
+                    if data_type != None:
+                        break
+                except:
+                    pass
 
+            if pid_value_props == None:
+                all_prop_values = [
+                    _get_claims_embedded_value(
+                        claims_index=prop_claims[pid][idx],
+                        data_type=data_type,
+                        value_prop=None
+                    )
+                    for idx in range(len(prop_claims[pid]))
+                ]
+
+            else:
+                all_prop_values = [
+                    _get_claims_embedded_value(
+                        claims_index=prop_claims[pid][idx],
+                        data_type=data_type,
+                        value_prop=pid_value_props[i]
+                    )
+                    for idx in range(len(prop_claims[pid]))
+                ]
+
+            assert pid_values[i] in all_prop_values
             return True
 
-    except:
+    except Exception as e:
         return False
 
 
 def parse_wikidata_dump_to_ndjson(
-    pids: str | list,
-    pid_values: str | list,
+    pids: str | list = None,
+    pid_values: str | list = None,
+    pid_value_props: str | list = None,
+    prop_intersection: bool = True,
     output_file_path: str = "Data/parsed-dump.ndjson",
     input_file_path: str = "Data/latest-all.json.bz2",
     output_limit: int = None,
@@ -227,11 +295,17 @@ def parse_wikidata_dump_to_ndjson(
 
     Parameters
     ----------
-        pids : str or list(str)
+        pids : str or list(str) (default=None)
             The property ids that should be subset by.
 
-        pid_values : str or list(str)
+        pid_values : str or list(str) (default=None)
             The values of the properties to subset by.
+
+        pid_value_props : str or list(str) (default=None)
+            Properties of the values like a unit or language if needed.
+
+        prop_intersection : bool (default=True)
+            Whether all pids and pid_values need to be present for the element to be included.
 
         output_file_path : str (default=Data/parsed-dump.ndjson)
             The name of the final output ndjson file.
@@ -258,8 +332,14 @@ def parse_wikidata_dump_to_ndjson(
             pid_values
         ), "If providing a value for `pid_values`, then one value should be provided for each `pid`."
 
+    if pid_value_props:
+        assert len(pids) == len(
+            pid_value_props
+        ), "If providing a value for `pid_value_props`, then one value should be provided for each `pid` (pass None if not needed)."
+
     pids = [pids] if isinstance(pids, str) else pids
     pid_values = [pid_values] if isinstance(pid_values, str) else pid_values
+    pid_value_props = [pid_value_props] if isinstance(pid_value_props, str) else pid_value_props
 
     rewrite_file = False
     if not os.path.exists(output_file_path):
@@ -309,7 +389,11 @@ def parse_wikidata_dump_to_ndjson(
                         # Read in to the last two characters that are a comma and new line.
                         json_entry = json.loads(line.decode("utf-8")[:-2])
                         if _process_json_entry(
-                            entry=json_entry, pids=pids, pid_values=pid_values
+                            entry=json_entry,
+                            pids=pids,
+                            pid_values=pid_values,
+                            pid_value_props=pid_value_props,
+                            prop_intersection=prop_intersection,
                         ):
                             f_out.write(json.dumps(json_entry) + "\n")
 
@@ -321,8 +405,29 @@ def parse_wikidata_dump_to_ndjson(
                                 lines_read += 1
                                 break
 
-                    except json.JSONDecodeError as e:
-                        print(f"Error decoding JSON at entry {lines_read + 1}: {e}")
+                    except:
+                        try:
+                            # The last element of the dump doesn't have a comma after it, just a new line.
+                            json_entry = json.loads(line.decode("utf-8")[:-1])
+                            if _process_json_entry(
+                                entry=json_entry,
+                                pids=pids,
+                                pid_values=pid_values,
+                                pid_value_props=pid_value_props,
+                                prop_intersection=prop_intersection,
+                            ):
+                                f_out.write(json.dumps(json_entry) + "\n")
+
+                                entities_returned += 1
+                                if output_limit:
+                                    pbar.update()
+
+                                if entities_returned == output_limit:
+                                    lines_read += 1
+                                    break
+
+                        except json.JSONDecodeError as e:
+                            print(f"Error decoding JSON at entry {lines_read + 1}: {e}")
 
                     lines_read += 1
                     if input_limit:
