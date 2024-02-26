@@ -60,7 +60,6 @@ graph TD
         where somebody has scrapped the data
         or used an alternative method to get
         data from a website
-
         Verify this API is up-to-date in
         information, still works, and something
         that can be queried at scale")
@@ -189,7 +188,6 @@ iterate("Write Python code to iterate through
  subgraph 7
     direction LR
         convert("Convert the the mismatch dataframe to a CSV
-
         Make sure to export it without an index column
         in pandas and upload it to the Mismatch Finder")
         upload("Upload the mismatches")
