@@ -34,7 +34,7 @@ flowchart TD
   end
  subgraph Items
     direction TB
-        F("Run a query on <a href="https://query.wikidata.org/">query.wikidata.org</a>
+        F("Run a query on query.wikidata.org
            counting how many items have the
            external ID property found")
         E("Verify that a lot of Wikidata items
@@ -170,7 +170,7 @@ Wikidata Query Service or QLever to do this"]
                   3. Use the code from before to get the attribute from that database and
                   compare it with the value in Wikidata
                   4. If they the values are not equivalent add the relevant information
-                  about the mismatch to a mismatch dataframe with the needed format (<a href="https://github.com/wmde/wikidata-mismatch-finder/blob/main/docs/UserGuide.md#creating-a-mismatches-import-file">link</a>)")
+                  about the mismatch to a mismatch dataframe with the needed format")
         iterate("Write Python code to iterate through
                  each of the filtered Wikidata items
                  and find if the Wikidata item attribute
@@ -191,8 +191,7 @@ Wikidata Query Service or QLever to do this"]
         convert("Convert the the mismatch dataframe to a CSV
 
                   Make sure to export it without an index column
-                  in pandas and <a href="https://github.com/wmde/wikidata-mismatch-finder/blob/main/docs/UserGuide. md#getting-upload-rights">upload it to the Mismatch Finder</a>")
-                  upload("Upload the mismatches")
+                  in pandas and upload it to the Mismatch Finder")
   end
     B --> C
     C --> D
