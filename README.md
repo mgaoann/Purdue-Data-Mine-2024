@@ -140,7 +140,6 @@ graph TD
         1. External identifier property researched earlier
         that link the Wikidata item to the database
         2. The attribute property decided on
-
         Execute a SPARQL query on the
         Wikidata Query Service or QLever to do this")
         list("Get the list of item IDs (QIDs)
