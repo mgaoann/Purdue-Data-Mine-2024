@@ -38,8 +38,8 @@ subgraph Items
         counting how many items have the
         external ID property found")
         E("Verify that a lot of Wikidata items
-        are linked to that database (we want
-        our code to be useful for a lot of entries)")
+        are linked to that database as we want
+        our code to be useful for a lot of entries")
 end
 subgraph 1
     direction LR
@@ -153,7 +153,7 @@ subgraph 5
         get("Get the Wikidata items that
         are linked to the database
         and their data to compare
-        with the database’s data")
+        with the database's data")
         QIDs
         filter("Filter the Wikidata dump
         for these items with these
