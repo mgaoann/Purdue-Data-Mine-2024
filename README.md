@@ -192,6 +192,7 @@ Wikidata Query Service or QLever to do this"]
 
                   Make sure to export it without an index column
                   in pandas and upload it to the Mismatch Finder")
+        upload("Upload the mismatches")
   end
     B --> C
     C --> D
