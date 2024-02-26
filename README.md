@@ -18,7 +18,7 @@ This repository contains the program materials and student work for Wikimedia De
 Below is a flowchart describing the process used to generate mismatches.
 
 ```mermaid
-flowchart TD
+graph TD
  subgraph Verify
     direction TB
         D("For example, if our chosen database is MusicBrainz,
