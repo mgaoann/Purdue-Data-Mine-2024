@@ -34,56 +34,63 @@ from numpy import NAN
 from tqdm import tqdm
 
 ## REGION
-acc = []
+try:
+    acc = pd.read_csv('mismatches.csv').to_dict(orient="records")
+except:
+    acc = []
+print(acc)
 blank_entry = {"id": np.NAN, "value": {"type": "value", "content": {"time": np.NAN}}}
 i = -1
-for entry in tqdm(mnm_mismatch_data_expanded):
-    i += 1
-    data = entry["time_mismatch"]
-    req = f"https://www.wikidata.org/w/rest.php/wikibase/v0/entities/items/{entry['item_id']}?_fields=statements"
-    try:
-        with urllib.request.urlopen(req) as url:
-            wd_props = json.load(url)["statements"]
-    except urllib.request.HTTPError as e:
-        # Fixed in newer version https://stackoverflow.com/questions/67723860/python-urllib-request-urlopen-http-error-308-permanent-redirect.
-        print("Skipped", req)
-        print(e)
-        continue
-
-    with urllib.request.urlopen(f"https://mix-n-match.toolforge.org/api.php?query=get_entry&entry={entry['entry_id']}") as url:
+try:
+    for entry in tqdm(mnm_mismatch_data_expanded[len(acc):]):
+        i += 1
+        data = entry["time_mismatch"]
+        req = f"https://www.wikidata.org/w/rest.php/wikibase/v0/entities/items/{entry['item_id']}?_fields=statements"
         try:
-            ext_url = json.load(url)["data"]["entries"][entry["entry_id"]]["ext_url"]
-        except TypeError:
-            # Sometimes API can return json.load(url)["data"]["entries"] == []
-            print("Skipping malformatted external URL:", entry["source"], "idx", i)
+            with urllib.request.urlopen(req) as url:
+                wd_props = json.load(url)["statements"]
+        except urllib.request.HTTPError as e:
+            # Fixed in newer version https://stackoverflow.com/questions/67723860/python-urllib-request-urlopen-http-error-308-permanent-redirect.
+            print("Skipped", req)
+            print(e)
             continue
-    
-    nonnull_wd_vals = wd_props[data["pid"]] if data["pid"] in wd_props else [blank_entry]
-    # Sometimes, wikidata has multiple incorrect values, so fix them all
-    for wd_val in nonnull_wd_vals:
-        guid = wd_val["id"]
+
+        with urllib.request.urlopen(f"https://mix-n-match.toolforge.org/api.php?query=get_entry&entry={entry['entry_id']}") as url:
+            try:
+                ext_url = json.load(url)["data"]["entries"][entry["entry_id"]]["ext_url"]
+            except TypeError:
+                # Sometimes API can return json.load(url)["data"]["entries"] == []
+                print("Skipping malformatted external URL:", entry["source"], "idx", i)
+                continue
         
-        # Eg: Q62900754 has a death date range, which doesn't play nice, so ignore it
-        if wd_val["value"]["type"] != "value":
-            print(f"Skipping GUID {guid} on {entry['item_id']} {data['pid']} because it doesn't have a concrete value")
-            continue
+        nonnull_wd_vals = wd_props[data["pid"]] if data["pid"] in wd_props else [blank_entry]
+        # Sometimes, wikidata has multiple incorrect values, so fix them all
+        for wd_val in nonnull_wd_vals:
+            guid = wd_val["id"]
+            
+            # Eg: Q62900754 has a death date range, which doesn't play nice, so ignore it
+            if wd_val["value"]["type"] != "value":
+                print(f"Skipping GUID {guid} on {entry['item_id']} {data['pid']} because it doesn't have a concrete value")
+                continue
+            
+            wikidata_value = wd_val["value"]["content"]["time"]
+            
+            # Isn't actually a mismatch
+            if (wikidata_value == data["mnm_time"]):
+                continue
         
-        wikidata_value = wd_val["value"]["content"]["time"]
-        
-        # Isn't actually a mismatch
-        if (wikidata_value == data["mnm_time"]):
-            continue
-    
-        acc.append({
-            "item_id": entry["item_id"],
-            "statement_guid": guid,
-            "property_id": data["pid"],
-            "wikidata_value": wikidata_value,
-            "meta_wikidata_value": np.NAN,
-            "external_value": data["mnm_time"],
-            "external_url": ext_url,
-            "type": "statement",
-        })
+            acc.append({
+                "item_id": entry["item_id"],
+                "statement_guid": guid,
+                "property_id": data["pid"],
+                "wikidata_value": wikidata_value,
+                "meta_wikidata_value": np.NAN,
+                "external_value": data["mnm_time"],
+                "external_url": ext_url,
+                "type": "statement",
+            })
+finally:
+    pass
 ## ENDREGION
     
 mismatchDF = pd.DataFrame(acc)
