@@ -28,7 +28,6 @@ from tqdm.auto import tqdm
 
 logging.disable(logging.WARNING)
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
-import tensorflow as tf
 
 
 def download_wikidata_json_dump(target_dir="Data", dump_id=False):
@@ -47,6 +46,7 @@ def download_wikidata_json_dump(target_dir="Data", dump_id=False):
     -------
         A downloaded bz2 compressed Wikidata dump with printed information on the downloaded file.
     """
+    import tensorflow as tf
     if not os.path.exists(target_dir):
         print(f"Making {target_dir} directory")
         os.makedirs(target_dir)
