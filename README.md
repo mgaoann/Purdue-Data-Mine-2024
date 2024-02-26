@@ -142,7 +142,7 @@ subgraph QIDs
         2. The attribute property decided on
         Execute a SPARQL query on the
         Wikidata Query Service or QLever to do this")
-        list("Get the list of item IDs (QIDs)
+        list("Get the list of item QIDs
         from Wikidata that are linked to
         the database and have the property
         for the attribute we are looking
