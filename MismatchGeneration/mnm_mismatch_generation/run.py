@@ -38,7 +38,6 @@ try:
     acc = pd.read_csv('mismatches.csv').to_dict(orient="records")
 except:
     acc = []
-print(acc)
 blank_entry = {"id": np.NAN, "value": {"type": "value", "content": {"time": np.NAN}}}
 i = -1
 try:
@@ -90,9 +89,6 @@ try:
                 "type": "statement",
             })
 finally:
-    pass
-## ENDREGION
-    
-mismatchDF = pd.DataFrame(acc)
-mismatchDF.to_csv("mismatches.csv", index=False)
-check_mf_formatting(mismatchDF)
+    mismatchDF = pd.DataFrame(acc)
+    mismatchDF.to_csv("mismatches.csv", index=False)
+    check_mf_formatting(mismatchDF)
