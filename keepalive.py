@@ -1,3 +1,7 @@
+"""
+Script to keep the computer awake during long data processes.
+"""
+
 import time
 import random
 import string
