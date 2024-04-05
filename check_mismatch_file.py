@@ -10,9 +10,17 @@ Usage:
 
 python3 check_mismatch_file.py --mismatch-file MISMATCH_FILE --verbose
 
-Abbreviated argument usage:
+Example:
+
+python3 check_mismatch_file.py --mismatch-file test_mismatches.csv --verbose
+
+Abbreviated arguments usage:
 
 python3 check_mismatch_file.py -mf MISMATCH_FILE -v
+
+Abbreviated arguments example:
+
+python3 check_mismatch_file.py -mf test_mismatches.csv -v
 """
 
 import argparse

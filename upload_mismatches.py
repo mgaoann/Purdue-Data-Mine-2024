@@ -15,8 +15,9 @@ The example cURL request for Mismatch Finder is:
         -F "expires=YYYY-MM-DD"
 
 Usage:
-    Note: Please only pass arguments to EITHER --mismatch-file OR --mismatch-files-dir.
-    Note: --description, --external-source-url and --expires are optional.
+
+Note: Please only pass arguments to EITHER --mismatch-file OR --mismatch-files-dir.
+Note: --description, --external-source-url and --expires are optional.
 
 python3 upload_mismatches.py \
     --access-token ACCESS_TOKEN \
@@ -28,9 +29,20 @@ python3 upload_mismatches.py \
     --expires EXPIRES \
     --verbose
 
-Abbreviated argument usage:
-    Note: Please only pass arguments to EITHER -mf OR -mfd.
-    Note: --des, --src and --exp are optional.
+Example:
+
+python3 upload_mismatches.py \
+    --access-token YOUR_ACCESS_TOKEN \
+    --mismatch-file mismatches_test.csv \
+    --description "Test mismatches upload" \
+    --external-source "Test Source" \
+    --external-source-url "https://www.wikidata.org" \
+    --verbose
+
+Abbreviated arguments usage:
+
+Note: Please only pass arguments to EITHER -mf OR -mfd.
+Note: --des, --src and --exp are optional.
 
 python3 upload_mismatches.py \
     -pat ACCESS_TOKEN \
@@ -40,6 +52,16 @@ python3 upload_mismatches.py \
     -src EXTERNAL_SOURCE \
     -url EXTERNAL_SOURCE_URL \
     -exp EXPIRES \
+    -v
+
+Abbreviated arguments example:
+
+python3 upload_mismatches.py \
+    -pat YOUR_ACCESS_TOKEN \
+    -mf mismatches_test.csv \
+    -des "Test mismatches upload" \
+    -src "Test Source" \
+    -url "https://www.wikidata.org" \
     -v
 """
 
@@ -209,14 +231,16 @@ if MISMATCH_FILES_DIR:
 MF_API_IMPORT_URL = "https://mismatch-finder.toolforge.org/api/imports"
 headers = {"Accept": "application/json", "Authorization": f"Bearer {ACCESS_TOKEN}"}
 
-if DESCRIPTION or EXPIRES:
-    if DESCRIPTION and EXPIRES:
-        params = {"description": DESCRIPTION, "expires": EXPIRES}
-    elif DESCRIPTION:
-        params = {"description": DESCRIPTION}
-    elif EXPIRES:
-        params = {"expires": EXPIRES}
+params = {"external_source": EXTERNAL_SOURCE}
 
+if DESCRIPTION:
+    params["description"] = DESCRIPTION
+
+if EXTERNAL_SOURCE_URL:
+    params["external_source_url"] = EXTERNAL_SOURCE_URL
+
+if EXPIRES:
+    params["expires"] = EXPIRES
 
 # Section: Make upload request(s).
 if MISMATCH_FILE:
@@ -225,13 +249,26 @@ if MISMATCH_FILE:
             f"Uploading the mismatch file {MISMATCH_FILE} to the Wikidata Mismatch Finder..."
         )
 
-    r = requests.post(
-        MF_API_IMPORT_URL, data=MISMATCH_FILE, headers=headers, params=params
-    )
+    try:
+        with open(MISMATCH_FILE, "rb") as mismatch_file_binary:
+            r = requests.post(
+                MF_API_IMPORT_URL,
+                files={"mismatch_file": mismatch_file_binary},
+                headers=headers,
+                params=params,
+            )
+            r.raise_for_status()
 
-    print(
-        f"Mismatch file {MISMATCH_FILE} was successfully uploaded to the Wikidata Mismatch Finder."
-    )
+        print(
+            f"Mismatch file {MISMATCH_FILE} was successfully uploaded to the Wikidata Mismatch Finder."
+        )
+        print_thank_you_message()
+
+    except requests.exceptions.HTTPError as e:
+        print(
+            f"There was an error in trying to upload the mismatch file {MISMATCH_FILE}."
+        )
+        print("Response: " + e.response.text)
 
 elif MISMATCH_FILES_DIR:
     sorted_mfd_mf_paths = sorted(mfd_mf_paths)
@@ -248,16 +285,27 @@ elif MISMATCH_FILES_DIR:
         unit="file",
         disable=not VERBOSE,
     ):
-        r = requests.post(MF_API_IMPORT_URL, data=mf, headers=headers, params=params)
+        try:
+            with open(mf, "rb") as mismatch_file_binary:
+                r = requests.post(
+                    MF_API_IMPORT_URL,
+                    files={"mismatch_file": mismatch_file_binary},
+                    headers=headers,
+                    params=params,
+                )
+                r.raise_for_status()
 
-        # To assure some level of logging for if there is an error with one of the uploads.
-        if not VERBOSE:
-            print(
-                f"Mismatch file {mf} was successfully uploaded to the Wikidata Mismatch Finder."
-            )
+            # To assure some level of logging for if there is an error with one of the uploads.
+            if not VERBOSE:
+                print(
+                    f"Mismatch file {mf} was successfully uploaded to the Wikidata Mismatch Finder."
+                )
+
+        except requests.exceptions.HTTPError as e:
+            print(f"There was an error in trying to upload the mismatch file {mf}.")
+            print("Response: " + e.response.text)
 
     print(
         "All mismatch files were successfully uploaded to the Wikidata Mismatch Finder."
     )
-
-print_thank_you_message()
+    print_thank_you_message()

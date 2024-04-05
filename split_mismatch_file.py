@@ -14,12 +14,30 @@ python3 split_mismatch_file.py \
     --delete-mismatch-file \
     --verbose
 
-Abbreviated argument usage:
+Example:
+
+Note: The original mismatch file will not be deleted as we're not passing --delete-mismatch-file.
+
+python3 split_mismatch_file.py \
+    --mismatch-file test_mismatches.csv \
+    --mismatch-files-dir test_mismatches \
+    --verbose
+
+Abbreviated arguments usage:
 
 python3 split_mismatch_file.py \
     -mf MISMATCH_FILE \
     -mfd MISMATCH_FILE_DIR \
     -del \
+    -v
+
+Abbreviated arguments example:
+
+Note: The original mismatch file will not be deleted as we're not passing -del.
+
+python3 split_mismatch_file.py \
+    -mf test_mismatches.csv \
+    -mfd test_mismatches \
     -v
 """
 
