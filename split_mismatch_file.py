@@ -170,6 +170,14 @@ created_mismatch_files_print_str = "\n".join(mismatch_file_df_names)
 print(
     f"The following mismatch files were created in the {mismatch_files_dir_path} directory:\n\n{created_mismatch_files_print_str}"
 )
+
+if DELETE_MISMATCH_FILE:
+    if VERBOSE:
+        print(
+            "\nThe --delete-mismatch-file (-del) argument was passed, so deleting the original mismatch file."
+        )
+        os.remove(MISMATCH_FILE)
+
 print(
     "\nYou're now ready to upload your mismatch files to Mismatch Finder via the upload API! Please use the `upload_mismatches.py` file or see other instructions in the user guide at https://github.com/wmde/wikidata-mismatch-finder/blob/development/docs/UserGuide.md."
 )
