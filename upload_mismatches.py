@@ -167,7 +167,7 @@ if MISMATCH_FILE:
 if MISMATCH_FILES_DIR:
     assert os.path.isdir(
         MISMATCH_FILES_DIR
-    ), f"Please provide a {lower(parser._actions[4].help.split('(Optional) ')[1])}"
+    ), f"Mismatch directory not found. Please provide a {lower(parser._actions[4].help.split('(Optional) ')[1])}"
 
     mfd_files = [
         f
@@ -177,9 +177,7 @@ if MISMATCH_FILES_DIR:
     mfd_mf_files = [f for f in mfd_files if f[-4:] == ".csv"]
     mfd_remaining_files = set(mfd_files) - set(mfd_mf_files)
 
-    assert (
-        not mfd_remaining_files
-    ), f"Please provide a {lower(parser._actions[4].help.split('(Optional) ')[1])}"
+    assert not mfd_remaining_files, f"Mismatch directory is not empty. Please provide a {lower(parser._actions[4].help.split('(Optional) ')[1])}"
 
     mfd_mf_paths = []
     for mf in mfd_mf_files:
