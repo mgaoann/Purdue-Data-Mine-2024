@@ -147,7 +147,7 @@ number_of_split_mismatch_files = int(mf_size / 10) + (mf_size % 10 > 0)
 both_or_all = "both" if number_of_split_mismatch_files == 2 else "all"
 if VERBOSE:
     print(
-        f"The mismatch file {mismatch_file_name} will be split into {number_of_split_mismatch_files} different files that will {both_or_all} be 10 MB or less."
+        f"The mismatch file {mismatch_file_name} will be split into {number_of_split_mismatch_files} different files that will {both_or_all} be 10 MB or less..."
     )
 
 # Section: Split and save the resulting CSVs.

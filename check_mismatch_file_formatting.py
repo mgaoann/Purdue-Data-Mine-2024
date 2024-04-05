@@ -257,7 +257,7 @@ if MISMATCH_FILE:
 # Section: Run check_mf_formatting over the provided mismatch file.
 if VERBOSE:
     print(
-        f"Checking the data within the mismatch file {MISMATCH_FILE} to see if it's valid for uploading to Mismatch Finder."
+        f"Checking the data within the mismatch file {MISMATCH_FILE} to see if it's valid for uploading to Mismatch Finder..."
     )
 
 df_mismatch_file = pd.read_csv(MISMATCH_FILE)

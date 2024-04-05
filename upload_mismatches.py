@@ -232,7 +232,6 @@ if MISMATCH_FILE:
     print(
         f"Mismatch file {MISMATCH_FILE} was successfully uploaded to the Wikidata Mismatch Finder."
     )
-    print_thank_you_message()
 
 elif MISMATCH_FILES_DIR:
     if VERBOSE:
@@ -253,4 +252,5 @@ elif MISMATCH_FILES_DIR:
     print(
         "All mismatch files were successfully uploaded to the Wikidata Mismatch Finder."
     )
-    print_thank_you_message()
+
+print_thank_you_message()
