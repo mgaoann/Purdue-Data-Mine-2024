@@ -159,7 +159,7 @@ if MISMATCH_FILE:
 
     assert (
         mf_size < 10
-    ), "The size of the passed mismatch file via the --mismatch-file (-mf) argument is greater than the import file size limit of 10 MB. Please break it down into smaller CSV files and pass a directory containing only these CSVs to the --mismatch-files-dir (-mdf) argument."
+    ), "The size of the passed mismatch file via the --mismatch-file (-mf) argument is greater than the Mismatch Finder import file size limit of 10 MB. Please break it down into smaller CSV files using `split_mismatch_file.py` and pass a directory containing only these CSVs to the --mismatch-files-dir (-mdf) argument."
 
 # Assert that the directory exists and that the contents of the directory are all CSVs that are less than 10 MB.
 if MISMATCH_FILES_DIR:
