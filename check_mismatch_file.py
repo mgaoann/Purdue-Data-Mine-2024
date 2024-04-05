@@ -247,7 +247,7 @@ MISMATCH_FILE = args.mismatch_file
 assert MISMATCH_FILE, f"""Please provide a path via the --mismatch-file (-mf) argument:
 --mismatch-file (-mf): a {lower(parser._actions[2].help)}"""
 
-# Assert that the file exists and that it is a CSV that is less than 10 MB.
+# Assert that the file exists and that it is a CSV with a filesize less than 10 MB.
 if MISMATCH_FILE:
     assert os.path.isfile(
         MISMATCH_FILE

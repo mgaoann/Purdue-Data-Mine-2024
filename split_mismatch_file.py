@@ -90,7 +90,7 @@ DELETE_MISMATCH_FILE = args.delete_mismatch_file
 assert MISMATCH_FILE, f"""Please provide a path via the --mismatch-file (-mf) argument:
 --mismatch-file (-mf): a {lower(parser._actions[2].help)}"""
 
-# Assert that the file exists and that it is a CSV that is greater than 10 MB.
+# Assert that the file exists and that it is a CSV with a filesize greater than 10 MB.
 if MISMATCH_FILE:
     assert os.path.isfile(
         MISMATCH_FILE

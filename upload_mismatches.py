@@ -169,7 +169,7 @@ assert (
 
 assert EXTERNAL_SOURCE, f"Please provide {lower(parser._actions[6].help)}"
 
-# Assert that the file exists and that it is a CSV that is less than 10 MB.
+# Assert that the file exists and that it is a CSV with a filesize less than 10 MB.
 if MISMATCH_FILE:
     assert os.path.isfile(
         MISMATCH_FILE
@@ -260,7 +260,7 @@ if MISMATCH_FILE:
             r.raise_for_status()
 
         print(
-            f"Mismatch file {MISMATCH_FILE} was successfully uploaded to the Wikidata Mismatch Finder."
+            f"Mismatch file {MISMATCH_FILE} was successfully uploaded to Mismatch Finder."
         )
         print_thank_you_message()
 
@@ -298,14 +298,12 @@ elif MISMATCH_FILES_DIR:
             # To assure some level of logging for if there is an error with one of the uploads.
             if not VERBOSE:
                 print(
-                    f"Mismatch file {mf} was successfully uploaded to the Wikidata Mismatch Finder."
+                    f"Mismatch file {mf} was successfully uploaded to Mismatch Finder."
                 )
 
         except requests.exceptions.HTTPError as e:
             print(f"There was an error in trying to upload the mismatch file {mf}.")
             print("Response: " + e.response.text)
 
-    print(
-        "All mismatch files were successfully uploaded to the Wikidata Mismatch Finder."
-    )
+    print("All mismatch files were successfully uploaded to Mismatch Finder.")
     print_thank_you_message()
