@@ -48,7 +48,7 @@ import requests
 import tqdm
 
 
-# Section: Helper classes, variables and functions for the script.
+# Section: Helper classes functions for the script.
 class terminal_colors:
     """
     Class for easily applying the Wikidata brand colors in the terminal and resetting.
@@ -95,12 +95,12 @@ parser.add_argument(
 parser.add_argument(
     "-mf",
     "--mismatch-file",
-    help="Path to the CSV file containing mismatches to import to Mismatch Finder.",
+    help="(Optional) Path to the CSV file containing mismatches to import to Mismatch Finder.",
 )
 parser.add_argument(
     "-mfd",
     "--mismatch-files-dir",
-    help="Path to a directory containing only CSV files with mismatches to import to Mismatch Finder.",
+    help="(Optional) Path to a directory containing only CSV files with mismatches to import to Mismatch Finder.",
 )
 parser.add_argument(
     "-des",
@@ -139,7 +139,7 @@ assert ACCESS_TOKEN, f"Please provide {lower(parser._actions[2].help)}"
 
 assert (
     MISMATCH_FILE or MISMATCH_FILES_DIR and not (MISMATCH_FILE and MISMATCH_FILES_DIR)
-), f"""Please provide a path via --mismatch-file (-mf) OR --mismatch-files-dir (-mfd):
+), f"""Please provide a path via EITHER the --mismatch-file (-mf) OR --mismatch-files-dir (-mfd) arguments:
 --mismatch-file (-mf): a {lower(parser._actions[3].help)}
 --mismatch-files-dir (-mfd): a {lower(parser._actions[4].help)}"""
 
@@ -149,11 +149,11 @@ assert EXTERNAL_SOURCE, f"Please provide {lower(parser._actions[6].help)}"
 if MISMATCH_FILE:
     assert os.path.isfile(
         MISMATCH_FILE
-    ), f"Please provide a {lower(parser._actions[3].help)}"
+    ), f"Please provide a {lower(parser._actions[3].help.split('(Optional) ')[1])}"
 
     assert (
         MISMATCH_FILE[-4:] == ".csv"
-    ), f"Please provide a {lower(parser._actions[3].help)}"
+    ), f"Please provide a {lower(parser._actions[3].help.split('(Optional) ')[1])}"
 
     mf_size = os.path.getsize(MISMATCH_FILE) >> 20
 
@@ -165,7 +165,7 @@ if MISMATCH_FILE:
 if MISMATCH_FILES_DIR:
     assert os.path.isdir(
         MISMATCH_FILES_DIR
-    ), f"Please provide a {lower(parser._actions[4].help)}"
+    ), f"Please provide a {lower(parser._actions[4].help.split('(Optional) ')[1])}"
 
     mfd_files = [
         f
@@ -175,28 +175,35 @@ if MISMATCH_FILES_DIR:
     mfd_mf_files = [f for f in mfd_files if f[-4:] == ".csv"]
     mfd_remaining_files = set(mfd_files) - set(mfd_mf_files)
 
-    assert not mfd_remaining_files, f"Please provide a {lower(parser._actions[4].help)}"
+    assert (
+        not mfd_remaining_files
+    ), f"Please provide a {lower(parser._actions[4].help.split('(Optional) ')[1])}"
 
     mfd_mf_paths = []
     for mf in mfd_mf_files:
+        if os.name == "nt":  # Windows
+            dir_path_separator = "\\"
+        else:
+            dir_path_separator = "/"
+
         # Remove potential trailing slash or backlash from the end of the directory path.
-        if MISMATCH_FILES_DIR.endswith("/") or MISMATCH_FILES_DIR.endswith("\\"):
+        if MISMATCH_FILES_DIR.endswith(dir_path_separator):
             mfd_path = MISMATCH_FILES_DIR[:-1]
         else:
             mfd_path = MISMATCH_FILES_DIR
 
-        if os.name == "nt":  # Windows
-            mfd_mf_paths.append(mfd_path + "\\" + mf)
+        mfd_mf_paths.append(mfd_path + dir_path_separator + mf)
 
-        else:
-            mfd_mf_paths.append(mfd_path + "/" + mf)
-
+    too_large_mismatch_files = []
     for mf_path in mfd_mf_paths:
         mfd_mf_size = os.path.getsize(mf_path) >> 20
 
-        assert (
-            mfd_mf_size < 10
-        ), "The size of one of the passed mismatch files via the --mismatch-files-dir (-mdf) argument is greater than the import file size limit of 10 MB. Please break it down into smaller CSV files and pass a directory containing only these CSVs to the --mismatch-files-dir (-mdf) argument."
+        if mfd_mf_size > 10:
+            too_large_mismatch_files.append(mf_path)
+
+        too_large_mismatch_files_print_st = "\n".join(too_large_mismatch_files)
+
+        assert not too_large_mismatch_files, f"The size of one of the passed mismatch files via the --mismatch-files-dir (-mdf) argument is greater than the import file size limit of 10 MB. Please break it down into smaller CSV files and pass a directory containing only these CSVs to the --mismatch-files-dir (-mdf) argument. Mismatch files that are too large are:\n\n{too_large_mismatch_files_print_st}"
 
 # Section: Prepare components of the request.
 MF_API_IMPORT_URL = "https://mismatch-finder.toolforge.org/api/imports"
@@ -232,7 +239,7 @@ elif MISMATCH_FILES_DIR:
         print(
             "The following mismatch files will be uploaded to the Wikidata Mismatch Finder:"
         )
-        print({", ".join(p for p in mfd_mf_paths)})
+        print({", ".join(mfd_mf_paths)})
 
     for mf in tqdm(
         mfd_mf_paths, desc="Mismatch files uploaded", unit="file", disable=not VERBOSE
