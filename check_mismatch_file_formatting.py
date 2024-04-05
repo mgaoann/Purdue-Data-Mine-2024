@@ -243,11 +243,11 @@ assert MISMATCH_FILE, f"""Please provide a path via the --mismatch-file (-mf) ar
 if MISMATCH_FILE:
     assert os.path.isfile(
         MISMATCH_FILE
-    ), f"Please provide a {lower(parser._actions[2].help)}"
+    ), f"Mismatch file not found. Please provide a {lower(parser._actions[2].help)}"
 
     assert (
         MISMATCH_FILE[-4:] == ".csv"
-    ), f"Please provide a {lower(parser._actions[2].help)}"
+    ), f"Mismatch file not a CSV. Please provide a {lower(parser._actions[2].help)}"
 
     mf_size = os.path.getsize(MISMATCH_FILE) >> 20
 

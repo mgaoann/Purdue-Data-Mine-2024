@@ -47,7 +47,7 @@ import argparse
 import os
 import requests
 
-import tqdm
+from tqdm import tqdm
 
 
 # Section: Helper classes functions for the script.
@@ -151,11 +151,11 @@ assert EXTERNAL_SOURCE, f"Please provide {lower(parser._actions[6].help)}"
 if MISMATCH_FILE:
     assert os.path.isfile(
         MISMATCH_FILE
-    ), f"Please provide a {lower(parser._actions[3].help.split('(Optional) ')[1])}"
+    ), f"Mismatch file not found. Please provide a {lower(parser._actions[3].help.split('(Optional) ')[1])}"
 
     assert (
         MISMATCH_FILE[-4:] == ".csv"
-    ), f"Please provide a {lower(parser._actions[3].help.split('(Optional) ')[1])}"
+    ), f"Mismatch file not a CSV. Please provide a {lower(parser._actions[3].help.split('(Optional) ')[1])}"
 
     mf_size = os.path.getsize(MISMATCH_FILE) >> 20
 
@@ -224,7 +224,7 @@ if DESCRIPTION or EXPIRES:
 if MISMATCH_FILE:
     if VERBOSE:
         print(
-            f"Uploading mismatch file {MISMATCH_FILE} to the Wikidata Mismatch Finder..."
+            f"Uploading the mismatch file {MISMATCH_FILE} to the Wikidata Mismatch Finder..."
         )
 
     r = requests.post(
@@ -236,20 +236,27 @@ if MISMATCH_FILE:
     )
 
 elif MISMATCH_FILES_DIR:
+    sorted_mfd_mf_paths = sorted(mfd_mf_paths)
+
     if VERBOSE:
+        mismatch_files_to_upload_print_str = "\n".join(sorted_mfd_mf_paths)
         print(
-            "The following mismatch files will be uploaded to the Wikidata Mismatch Finder:"
+            f"The following mismatch files will be uploaded to the Wikidata Mismatch Finder:\n\n{mismatch_files_to_upload_print_str}\n"
         )
-        print({", ".join(mfd_mf_paths)})
 
     for mf in tqdm(
-        mfd_mf_paths, desc="Mismatch files uploaded", unit="file", disable=not VERBOSE
+        sorted_mfd_mf_paths,
+        desc="Mismatch files uploaded",
+        unit="file",
+        disable=not VERBOSE,
     ):
         r = requests.post(MF_API_IMPORT_URL, data=mf, headers=headers, params=params)
 
-        print(
-            f"Mismatch file {mf} was successfully uploaded to the Wikidata Mismatch Finder."
-        )
+        # To assure some level of logging for if there is an error with one of the uploads.
+        if not VERBOSE:
+            print(
+                f"Mismatch file {mf} was successfully uploaded to the Wikidata Mismatch Finder."
+            )
 
     print(
         "All mismatch files were successfully uploaded to the Wikidata Mismatch Finder."
