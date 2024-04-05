@@ -144,6 +144,8 @@ def check_mf_formatting(df: pd.DataFrame):
                 "Please assure that `statement_guid` is null only in cases where `wikidata_value` is as well."
             )
 
+        # TODO: Check the formatting of statement GUIDs. Needs QID and $ and the rest separated by dashes.
+
     # 5. Check that all external URLs are valid.
     if "external_url" in df.columns:
         url_validation_checks = [_validate_url(u) for u in df["external_url"]]
