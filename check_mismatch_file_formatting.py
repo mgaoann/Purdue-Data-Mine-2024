@@ -7,10 +7,12 @@ Please see the Mismatch Finder User Guide for more information:
     https://github.com/wmde/wikidata-mismatch-finder/blob/development/docs/UserGuide.md
 
 Usage:
-    python3 check_mismatch_file_formatting.py --mismatch-file MISMATCH_FILE --verbose
+
+python3 check_mismatch_file_formatting.py --mismatch-file MISMATCH_FILE --verbose
 
 Abbreviated argument usage:
-    python3 check_mismatch_file_formatting.py -mf MISMATCH_FILE -v
+
+python3 check_mismatch_file_formatting.py -mf MISMATCH_FILE -v
 """
 
 import argparse

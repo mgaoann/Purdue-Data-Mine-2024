@@ -7,18 +7,20 @@ Please see the Mismatch Finder User Guide for more information:
     https://github.com/wmde/wikidata-mismatch-finder/blob/development/docs/UserGuide.md
 
 Usage:
-    python3 split_mismatch_file.py \
-        --mismatch-file MISMATCH_FILE \
-        --mismatch-files-dir MISMATCH_FILE_DIR \
-        --delete-mismatch-file \
-        --verbose
+
+python3 split_mismatch_file.py \
+    --mismatch-file MISMATCH_FILE \
+    --mismatch-files-dir MISMATCH_FILE_DIR \
+    --delete-mismatch-file \
+    --verbose
 
 Abbreviated argument usage:
-    python3 split_mismatch_file.py \
-        -mf MISMATCH_FILE \
-        -mfd MISMATCH_FILE_DIR \
-        -del \
-        -v
+
+python3 split_mismatch_file.py \
+    -mf MISMATCH_FILE \
+    -mfd MISMATCH_FILE_DIR \
+    -del \
+    -v
 """
 
 import argparse

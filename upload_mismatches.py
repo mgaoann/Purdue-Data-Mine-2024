@@ -17,28 +17,30 @@ The example cURL request for Mismatch Finder is:
 Usage:
     Note: Please only pass arguments to EITHER --mismatch-file OR --mismatch-files-dir.
     Note: --description, --external-source-url and --expires are optional.
-    python3 upload_mismatches.py \
-        --access-token ACCESS_TOKEN \
-        --mismatch-file MISMATCH_FILE \
-        --mismatch-files-dir MISMATCH_FILE_DIR \
-        --description DESCRIPTION \
-        --external-source EXTERNAL_SOURCE \
-        --external-source-url EXTERNAL_SOURCE_URL \
-        --expires EXPIRES \
-        --verbose
+
+python3 upload_mismatches.py \
+    --access-token ACCESS_TOKEN \
+    --mismatch-file MISMATCH_FILE \
+    --mismatch-files-dir MISMATCH_FILE_DIR \
+    --description DESCRIPTION \
+    --external-source EXTERNAL_SOURCE \
+    --external-source-url EXTERNAL_SOURCE_URL \
+    --expires EXPIRES \
+    --verbose
 
 Abbreviated argument usage:
     Note: Please only pass arguments to EITHER -mf OR -mfd.
     Note: --des, --src and --exp are optional.
-    python3 upload_mismatches.py \
-        -pat ACCESS_TOKEN \
-        -mf MISMATCH_FILE \
-        -mfd MISMATCH_FILE_DIR \
-        -des DESCRIPTION \
-        -src EXTERNAL_SOURCE \
-        -url EXTERNAL_SOURCE_URL \
-        -exp EXPIRES \
-        -v
+
+python3 upload_mismatches.py \
+    -pat ACCESS_TOKEN \
+    -mf MISMATCH_FILE \
+    -mfd MISMATCH_FILE_DIR \
+    -des DESCRIPTION \
+    -src EXTERNAL_SOURCE \
+    -url EXTERNAL_SOURCE_URL \
+    -exp EXPIRES \
+    -v
 """
 
 import argparse
