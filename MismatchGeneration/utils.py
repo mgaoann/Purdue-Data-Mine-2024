@@ -14,6 +14,7 @@ import bz2
 import json
 import logging
 import os
+import re
 import requests
 from urllib.parse import urlparse
 
@@ -551,6 +552,18 @@ def check_mf_formatting(df: pd.DataFrame):
             df_formatted_correctly = False
             correction_instruction.append(
                 "Please assure that `statement_guid` is null only in cases where `wikidata_value` is as well."
+            )
+
+        guid_pattern = re.compile(r"^Q\d+\$\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$")
+        guid_patter_matches = df["statement_guid"].apply(
+            lambda x: bool(guid_pattern.match(str(x)))
+        )
+
+        if not guid_patter_matches.any():
+            print("Here")
+            df_formatted_correctly = False
+            correction_instruction.append(
+                "Some values in the column `statement_guid` are not formatted correctly. GUIDs begin with a QID, which is then followed by a dollar sign and alphanumeric characters separated by dashes."
             )
 
     # 5. Check that all external URLs are valid.
