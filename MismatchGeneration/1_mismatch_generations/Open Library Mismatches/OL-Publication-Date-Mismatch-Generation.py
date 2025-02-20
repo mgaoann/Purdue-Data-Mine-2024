@@ -3,6 +3,46 @@
 
 # # Mismatch Generation
 
+# **Author:** Maggie Gao  
+# **Project:** Purdue Data Mine x Wikimedia Deutschland
+# 
+# ## Wikidata Mismatch Creation - README
+# 
+# 
+# ---
+# 
+# 
+# ## Project Overview
+# 
+# This project was developed as part of a collaboration between **Purdue University's Data Mine** and **Wikimedia Deutschland (WME)**. The goal was to identify and document discrepancies between **Wikidata** and external trusted sources using the **Wikidata Mismatch Finder**.
+# 
+# ### Why Mismatch Detection Matters
+# Wikidata is a vast, structured knowledge base that powers Wikipedia, search engines, AI assistants, and various applications. However, inconsistencies between Wikidata and authoritative sources can propagate errors to these downstream projects. By detecting mismatches, this project contributes to improving Wikidata’s data accuracy, ensuring that widely used information remains reliable.
+# 
+# 
+# ---
+# 
+# ## My Contribution: Detecting Book Publication Date Mismatches
+# 
+# As part of this project, I focused on identifying mismatches in book publication dates between Wikidata and Open Library. The goal was to retrieve the earliest publication dates from Open Library, compare them with Wikidata's records, and flag discrepancies for review. This process involved:
+# 
+# 1. **Fetching Data**: Using the Open Library API to retrieve publication dates for books linked to Wikidata.
+# 2. **Data Cleaning & Transformation**: Converting publication dates into a uniform format for comparison.
+# 3. **Mismatch Detection**: Comparing values from both sources and identifying discrepancies.
+# 4. **CSV Generation**: Formatting the results into a structured CSV for submission to the Wikidata Mismatch Finder.
+# 
+# 
+# ---
+# 
+# 
+# ### Open Source and Contribution
+# 
+# This project is **open source** and released under open licenses.
+# 
+# For more details on this project and how to contribute, check out this blogpost we wrote:
+# 🔗[Unveiling Discrepancies: First Experiences with Finding Mismatches on Wikidata and How You Can Too]
+# 
+
 # In[1]:
 
 
